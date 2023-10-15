@@ -1,7 +1,3 @@
-#ifdef UNICODE
-#pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
-#endif
-
 #include <windows.h>
 #include <stdbool.h>
 
@@ -9,19 +5,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 bool blueRectInPinkRect = false; // 파란색 사각형이 분홍색 사각형 안에 있는지 여부
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int main() {
     const char szClassName[] = "ColoredRectanglesWindow";
 
     WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_VREDRAW | CS_HREDRAW, WndProc, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, szClassName, NULL };
     RegisterClassEx(&wc);
 
-    HWND hwnd = CreateWindowEx(0, szClassName, "202207017이유진", WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, NULL, NULL, hInstance, NULL);
+    HWND hwnd = CreateWindowEx(0, szClassName, L"202207017이유진", WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, NULL, NULL, GetModuleHandle(NULL), NULL);
 
     if (hwnd == NULL) {
         return 0;
     }
 
-    ShowWindow(hwnd, nCmdShow);
+    ShowWindow(hwnd, SW_SHOWDEFAULT); // SW_SHOWDEFAULT 사용
     UpdateWindow(hwnd);
 
     MSG msg;
@@ -66,7 +62,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
         // 파란색 사각형과 핑크색 사각형이 겹칠 때 "BOOM!" 문자열을 출력
         if (blueRectX + 50 > 200 && blueRectX < 500 && blueRectY + 50 > 200 && blueRectY < 500) {
-            TextOut(hdc, 100, 100, "BOOM!", 5); // "BOOM!" 문자열 출력
+            TextOut(hdc, 100, 100, L"BOOM!", 5); // "BOOM!" 문자열 출력
             blueRectInPinkRect = true;
         }
         else if (blueRectInPinkRect) {
