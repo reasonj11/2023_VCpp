@@ -26,10 +26,40 @@ int shapeType = 0;
 bool isSpacebarPressed = false;
 
 void DrawBox(HDC hdc, int centerX, int centerY, int size) {
+    POINT points[6];
 
+    for (int i = 0; i < 6; ++i) {
+        points[i].x = centerX + static_cast<int>(size * cos(i * 2 * 3.14159 / 6));
+        points[i].y = centerY + static_cast<int>(size * sin(i * 2 * 3.14159 / 6));
+    }
+
+    Polygon(hdc, points, 6);
+
+    // 중심에서 짝수 번째 꼭지점으로 선 그리기
+    for (int i = 0; i < 6; i += 2) {
+        MoveToEx(hdc, centerX, centerY, nullptr);
+        LineTo(hdc, points[i].x, points[i].y);
+    }
 }
 void DrawCircle(HDC hdc, int centerX, int centerY, int size) {
+    // 펜과 브러시 생성
+    HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0)); // 테두리 선의 속성 설정
+    HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 0)); // 노란색 브러시
 
+    // 펜과 브러시를 선택
+    HGDIOBJ hOldPen = SelectObject(hdc, hPen);
+    HGDIOBJ hOldBrush = SelectObject(hdc, hBrush);
+
+    // 원을 그림
+    Ellipse(hdc, centerX - size / 2, centerY - size / 2, centerX + size / 2, centerY + size / 2);
+
+    // 사용한 펜과 브러시 객체 정리
+    SelectObject(hdc, hOldPen);
+    SelectObject(hdc, hOldBrush);
+
+    // 펜과 브러시 삭제
+    DeleteObject(hPen);
+    DeleteObject(hBrush);
 }
 void DrawBonobono(HDC hdc, int centerX, int centerY, int size) {
     int halfSize = size / 1;
@@ -264,19 +294,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         HBRUSH hBackgroundBrush = CreateSolidBrush(RGB(255, 240, 200));
         FillRect(hdc, &clientRect, hBackgroundBrush);
 
-       // // 테두리를 그리는 영역을 계산합니다.
-       // RECT borderRect = { 8, 3, 800, 480 }; // 테두리가 그려질 영역을 계산
-       //
-       // // 박스의 테두리만 그리기
-       HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0,0,0)); // 테두리 선의 속성 설정
-       // HBRUSH hBackgroundBrush2 = CreateSolidBrush(RGB(255, 240, 200));
-       // FillRect(hdc, &borderRect, hBackgroundBrush2);
-       //
-       // // 테두리 그리기
-       // Rectangle(hdc, borderRect.left, borderRect.top, borderRect.right, borderRect.bottom);
+        // // 테두리를 그리는 영역을 계산합니다.
+        // RECT borderRect = { 8, 3, 800, 480 }; // 테두리가 그려질 영역을 계산
+        //
+        // // 박스의 테두리만 그리기
+        HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0)); // 테두리 선의 속성 설정
+        // HBRUSH hBackgroundBrush2 = CreateSolidBrush(RGB(255, 240, 200));
+        // FillRect(hdc, &borderRect, hBackgroundBrush2);
+        //
+        // // 테두리 그리기
+        // Rectangle(hdc, borderRect.left, borderRect.top, borderRect.right, borderRect.bottom);
 
-        
-        // 박스의 테두리만 그리기
+
+         // 박스의 테두리만 그리기
         HPEN drawingPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0)); // 테두리 선의 속성 설정
         HGDIOBJ drawingPen2 = SelectObject(hdc, hPen);
 
@@ -322,7 +352,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         }
         break;
     }
-   
+
     case WM_COMMAND:
         if (isButton1Clicked || isButton2Clicked || isButton3Clicked || isButton4Clicked || isButton5Clicked) {
             isButton1Clicked = false;
@@ -335,6 +365,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             // 윈도우를 갱신하여 이전에 그린 그림을 지웁니다.
             InvalidateRect(hWnd, NULL, FALSE);
         }
+        if (LOWORD(wParam) == 1) {
+            SetFocus(NULL);
+            isButton1Clicked = true;
+            isButton2Clicked = false;
+            isButton3Clicked = false;
+            isButton4Clicked = false;
+            isButton5Clicked = false;
+            isDrawing = false;
+        }
+        if (LOWORD(wParam) == 2) {
+            SetFocus(NULL);
+            isButton1Clicked = false;
+            isButton2Clicked = true;
+            isButton3Clicked = false;
+            isButton4Clicked = false;
+            isButton5Clicked = false;
+            isDrawing = false;
+        }
         if (LOWORD(wParam) == 3) {
             isButton1Clicked = false;
             isButton2Clicked = false;
@@ -344,7 +392,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             isDrawing = false;
 
             InvalidateRect(hWnd, NULL, FALSE);
-        
+
             SetFocus(NULL);
             InvalidateRect(hWnd, NULL, FALSE);
             // 보노보노 그림에 포커스를 설정
@@ -412,16 +460,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         }
         break;
     case WM_LBUTTONDOWN:
-        if (isButton4Clicked) {
+        if (isButton1Clicked || isButton2Clicked || isButton4Clicked) {
             isDrawing = true;
             startX = LOWORD(lParam);
             startY = HIWORD(lParam);
             endX = startX;
             endY = startY;
         }
+
         break;
-        
-    case WM_MOUSEMOVE:{
+
+    case WM_MOUSEMOVE: {
         if (isDrawing) {
             endX = LOWORD(lParam);
             endY = HIWORD(lParam);
@@ -442,7 +491,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             SetCursor(LoadCursor(NULL, IDC_ARROW));
         }
         break;
-        }
+    }
     case WM_LBUTTONUP:
         if (isDrawing) {
             isDrawing = false;
@@ -454,7 +503,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
-        return 0;
+    return 0;
 }
 
 
